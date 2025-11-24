@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List
 from decimal import Decimal
-from app.models.product import Product, StorePrice, Brand, Category
+from app.models import Product, Brand, Category, StorePrice
 from app.models.store import Store
 from app.schemas.product import ProductResponse, PriceInfo
 from app.schemas.cart import CartItem, CartTotalsResponse, StoreTotalResponse
