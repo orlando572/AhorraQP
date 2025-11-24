@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict
 from app.scrapers.tottus_scraper import TottusScraper
 from app.scrapers.plaza_vea_scraper import PlazaVeaScraper
-from app.models.product import Product, Brand, Category, StorePrice
+from app.models import Product, Brand, Category, StorePrice
 from app.models.store import Store
 
 class ScraperService:
