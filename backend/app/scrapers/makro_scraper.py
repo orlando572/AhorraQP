@@ -6,12 +6,12 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
-class PlazaVeaScraper(BaseScraper):
+class MakroScraper(BaseScraper):
 
     def __init__(self):
         super().__init__()
-        self.base_url = "https://www.plazavea.com.pe"
-
+        self.base_url = "https://www.makro.plazavea.com.pe"
+    
     def scrape_category(self, category_url: str) -> List[Dict]:
         self.setup_driver()
         products = []
@@ -84,14 +84,21 @@ class PlazaVeaScraper(BaseScraper):
                         stock = True if stock_str and stock_str.lower() == "true" else False
 
                         try:
+                            # Selector específico de Makro para el enlace (tiene clase -mk también a veces)
+                            # Pero el selector genérico por href suele funcionar mejor
                             link = item.find_element(By.CSS_SELECTOR, "a[href*='/p']")
                             url = link.get_attribute("href")
                         except:
                             url = None
 
+                        # ==========================================
+                        # CORRECCIÓN DE IMAGEN PARA MAKRO
+                        # ==========================================
                         img_url = None
                         try:
-                            img_element = item.find_element(By.CSS_SELECTOR, "figure.Showcase__photo img")
+                            # INTENTO 1: Selector específico de Makro (Showcase-mk__photo)
+                            img_element = item.find_element(By.CSS_SELECTOR, "figure.Showcase-mk__photo img")
+                            
                             candidato = img_element.get_attribute("src")
                             if not candidato or "data:image" in candidato:
                                 candidato = img_element.get_attribute("data-src")
@@ -101,8 +108,9 @@ class PlazaVeaScraper(BaseScraper):
                             if candidato and "http" in candidato and "data:image" not in candidato:
                                 img_url = candidato
                         except:
+                            # INTENTO 2: Fallback a la clase de la imagen directa (Showcase-mk__image)
                             try:
-                                img_element = item.find_element(By.CSS_SELECTOR, ".showcase__image")
+                                img_element = item.find_element(By.CSS_SELECTOR, ".Showcase-mk__image")
                                 img_url = img_element.get_attribute("src")
                             except:
                                 img_url = None
@@ -140,7 +148,8 @@ class PlazaVeaScraper(BaseScraper):
             if btn:
                 self.driver.execute_script("arguments[0].click();", btn[0])
                 return
-
+            
+            # Banner antiguo
             banner = self.driver.find_elements(By.ID, "cookie-consent-banner")
             if banner:
                 btn = banner[0].find_element(By.CSS_SELECTOR, ".CookieConsentBanner__button")
