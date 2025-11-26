@@ -4,6 +4,8 @@ Script para probar los scrapers manualmente
 """
 
 import sys
+import csv
+import os  # Import necesario para verificar si el archivo existe
 from pathlib import Path
 
 root_dir = Path(__file__).parent.parent
@@ -12,6 +14,43 @@ sys.path.insert(0, str(root_dir))
 from app.scrapers.plaza_vea_scraper import PlazaVeaScraper
 from app.scrapers.makro_scraper import MakroScraper
 
+# Nombre del archivo donde se guardarán los datos
+NOMBRE_ARCHIVO_CSV = "resultados_productos.csv"
+
+def guardar_en_csv(products, store_name):
+    """
+    Guarda la lista de productos en un archivo CSV.
+    Si el archivo no existe, crea los encabezados.
+    Si existe, agrega los datos al final (append).
+    """
+    columnas = ['tienda', 'nombre', 'marca', 'precio', 'stock', 'categoria', 'url', 'imagen']
+    
+    # Verificamos si el archivo existe para saber si escribir encabezados
+    archivo_existe = os.path.isfile(NOMBRE_ARCHIVO_CSV)
+    
+    try:
+        # mode='a' significa 'append' (agregar al final)
+        with open(NOMBRE_ARCHIVO_CSV, mode='a', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=columnas)
+            
+            # Escribir encabezado solo si es archivo nuevo
+            if not archivo_existe:
+                writer.writeheader()
+            
+            for p in products:
+                writer.writerow({
+                    'tienda': store_name,
+                    'nombre': p.get('name', 'N/A'),
+                    'marca': p.get('brand', 'N/A'),
+                    'precio': p.get('price', 0.0),
+                    'stock': "Sí" if p.get('stock') else "No",
+                    'categoria': p.get('category', 'N/A'),
+                    'url': p.get('url', ''),
+                    'imagen': p.get('image_url', '')
+                })
+        print(f"   >>> [ÉXITO] Se guardaron {len(products)} productos en '{NOMBRE_ARCHIVO_CSV}'")
+    except Exception as e:
+        print(f"   >>> [ERROR] No se pudo guardar en CSV: {e}")
 
 def ejecutar_busqueda(query, scraper_class, store_name):
     """Función auxiliar para ejecutar la búsqueda e imprimir resultados"""
@@ -28,6 +67,10 @@ def ejecutar_busqueda(query, scraper_class, store_name):
         if not products:
             print("No se encontraron productos.")
             return
+
+        # --- AQUÍ GUARDAMOS EN CSV ---
+        guardar_en_csv(products, store_name)
+        # -----------------------------
 
         print(f"\n=== RESULTADOS DE '{query.upper()}' EN {store_name.upper()} (Total: {total}) ===")
 
@@ -53,6 +96,7 @@ def main():
     while True:
         print("\n" + "="*50)
         print("=== MENU PRINCIPAL ===")
+        print(f"Nota: Los datos se guardan en: {NOMBRE_ARCHIVO_CSV}")
         print("Selecciona el supermercado:")
         print("1. Plaza Vea")
         print("2. Makro")
