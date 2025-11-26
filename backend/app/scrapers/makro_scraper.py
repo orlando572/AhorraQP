@@ -78,10 +78,18 @@ class MakroScraper(BaseScraper):
                         name = item.get_attribute("data-ga-name")
                         price = item.get_attribute("data-ga-price")
                         brand = item.get_attribute("data-ga-brand")
-                        category = item.get_attribute("data-ga-category")
+                        raw_category = item.get_attribute("data-ga-category") 
 
-                        stock_str = item.get_attribute("data-stock")
-                        stock = True if stock_str and stock_str.lower() == "true" else False
+                        if raw_category:
+                            parts = raw_category.split('/') # Cortamos por cada '/'
+                            if len(parts) > 1:
+                                # Tomamos el segundo elemento (índice 1), que sería "Arroz"
+                                category = parts[1].strip() 
+                            else:
+                                # Si no hay '/', tomamos todo el texto (ej. "Arroz")
+                                category = parts[0].strip() 
+                        else:
+                            category = "Sin categoría"
 
                         try:
                             # Selector específico de Makro para el enlace (tiene clase -mk también a veces)
@@ -122,7 +130,6 @@ class MakroScraper(BaseScraper):
                             "name": name,
                             "brand": brand,
                             "price": float(price) if price else 0.0,
-                            "stock": stock,
                             "url": url,
                             "image_url": img_url,
                             "category": category
