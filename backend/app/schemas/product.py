@@ -6,7 +6,6 @@ class PriceInfo(BaseModel):
     store_id: int
     store_name: str
     price: Decimal
-    unit: str
     url: Optional[str]
     is_available: bool
     

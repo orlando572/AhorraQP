@@ -85,7 +85,6 @@ class ProductService:
                 store_id=sp.store_id,
                 store_name=sp.store.name,
                 price=sp.price,
-                unit=sp.unit,
                 url=sp.url,
                 is_available=sp.is_available
             ))
