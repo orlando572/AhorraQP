@@ -1,0 +1,11 @@
+https://www.makro.plazavea.com.pe/ 
+https://www.plazavea.com.pe/
+# CATEGORIAS 
+/abarrotes
+/lacteos-y-huevos
+/carnes-aves-y-pescados
+/quesos-y-fiambres
+/bebidas
+/frutas-y-verduras
+
+

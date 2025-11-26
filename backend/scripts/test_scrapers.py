@@ -15,7 +15,7 @@ from app.scrapers.plaza_vea_scraper import PlazaVeaScraper
 from app.scrapers.makro_scraper import MakroScraper
 
 # Nombre del archivo donde se guardarán los datos
-NOMBRE_ARCHIVO_CSV = "resultados_productos.csv"
+NOMBRE_ARCHIVO_CSV = "resultados_productos_pruebas.csv"
 
 def guardar_en_csv(products, store_name):
     """
@@ -43,7 +43,6 @@ def guardar_en_csv(products, store_name):
                     'nombre': p.get('name', 'N/A'),
                     'marca': p.get('brand', 'N/A'),
                     'precio': p.get('price', 0.0),
-                    'stock': "Sí" if p.get('stock') else "No",
                     'categoria': p.get('category', 'N/A'),
                     'url': p.get('url', ''),
                     'imagen': p.get('image_url', '')
@@ -79,10 +78,6 @@ def ejecutar_busqueda(query, scraper_class, store_name):
             print(f"Nombre   : {product.get('name')}")
             print(f"Marca    : {product.get('brand')}")
             print(f"Precio   : S/ {product.get('price')}")
-            
-            stock_status = "Sí" if product.get('stock') else "No"
-            print(f"Stock    : {stock_status}")
-            
             print(f"Categoría: {product.get('category')}")
             print(f"URL      : {product.get('url')}")
             print(f"Imagen   : {product.get('image_url')}")
