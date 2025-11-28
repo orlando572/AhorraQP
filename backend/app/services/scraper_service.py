@@ -33,13 +33,8 @@ class ScraperService:
                 continue
             
             # Obtener o crear la tienda
-            store = self.db.query(Store).filter(Store.name == store_name).first()
-            if not store:
-                store = Store(name=store_name)
-                self.db.add(store)
-                self.db.commit()
-                self.db.refresh(store)
-                print(f"✓ Tienda '{store_name}' creada con ID: {store.id}")
+            store = self._get_or_create_store(store_name)
+            print(f"✓ Usando tienda '{store_name}' con ID: {store.id}")
             
             for url in urls:
                 try:
@@ -57,76 +52,141 @@ class ScraperService:
                     import traceback
                     traceback.print_exc()
     
+    def _get_or_create_store(self, store_name: str) -> Store:
+        """
+        Obtener tienda existente o crear una nueva
+        Evita duplicados por nombre
+        """
+        # Buscar tienda existente (case-insensitive)
+        store = self.db.query(Store).filter(
+            Store.name.ilike(store_name)
+        ).first()
+        
+        if not store:
+            store = Store(name=store_name)
+            self.db.add(store)
+            self.db.commit()
+            self.db.refresh(store)
+            print(f"  → Tienda '{store_name}' creada")
+        
+        return store
+    
+    def _get_or_create_brand(self, brand_name: str) -> Brand:
+        """
+        Obtener marca existente o crear una nueva
+        Evita duplicados
+        """
+        if not brand_name or not brand_name.strip():
+            brand_name = 'Genérico'
+        
+        brand_name = brand_name.strip()
+        
+        # Buscar marca existente (case-insensitive)
+        brand = self.db.query(Brand).filter(
+            Brand.name.ilike(brand_name)
+        ).first()
+        
+        if not brand:
+            brand = Brand(name=brand_name)
+            self.db.add(brand)
+            self.db.flush()  # Flush para obtener el ID sin commit
+        
+        return brand
+    
+    def _get_or_create_category(self, category_name: str) -> Category:
+        """
+        Obtener categoría existente o crear una nueva
+        Evita duplicados
+        """
+        if not category_name or not category_name.strip():
+            category_name = 'General'
+        
+        category_name = category_name.strip()
+        
+        # Buscar categoría existente (case-insensitive)
+        category = self.db.query(Category).filter(
+            Category.name.ilike(category_name)
+        ).first()
+        
+        if not category:
+            category = Category(name=category_name)
+            self.db.add(category)
+            self.db.flush()
+        
+        return category
+    
+    def _get_or_create_product(self, product_name: str, brand: Brand, category: Category, image_url: str = None) -> Product:
+        """
+        Obtener producto existente o crear uno nuevo
+        Busca por nombre exacto Y marca para evitar duplicados
+        """
+        if not product_name or not product_name.strip():
+            return None
+        
+        product_name = product_name.strip()
+        
+        # Buscar producto existente por nombre Y marca
+        product = self.db.query(Product).filter(
+            Product.name == product_name,
+            Product.brand_id == brand.id
+        ).first()
+        
+        if not product:
+            # Crear nuevo producto
+            product = Product(
+                name=product_name,
+                brand_id=brand.id,
+                category_id=category.id,
+                image_url=image_url
+            )
+            self.db.add(product)
+            self.db.flush()
+        else:
+            # Actualizar imagen si no tiene o si cambió
+            if image_url and not product.image_url:
+                product.image_url = image_url
+        
+        return product
+    
     def _save_products(self, products_data: List[Dict], store_id: int) -> int:
         """
         Guardar productos y precios en la base de datos
-        CON LÓGICA DE DEDUPLICACIÓN
+        CON LÓGICA DE DEDUPLICACIÓN MEJORADA
         """
         saved_count = 0
+        errors_count = 0
         
         for data in products_data:
             try:
-                # 1. OBTENER O CREAR MARCA
-                brand_name = data.get('brand', 'Genérico').strip()
-                if not brand_name:
-                    brand_name = 'Genérico'
-                    
-                brand = self.db.query(Brand).filter(
-                    Brand.name.ilike(brand_name)
-                ).first()
-                
-                if not brand:
-                    brand = Brand(name=brand_name)
-                    self.db.add(brand)
-                    self.db.flush()
-                
-                # 2. OBTENER O CREAR CATEGORÍA
-                category_name = data.get('category', 'General').strip()
-                if not category_name:
-                    category_name = 'General'
-                    
-                category = self.db.query(Category).filter(
-                    Category.name.ilike(category_name)
-                ).first()
-                
-                if not category:
-                    category = Category(name=category_name)
-                    self.db.add(category)
-                    self.db.flush()
-                
-                # 3. BUSCAR PRODUCTO EXISTENTE
-                # Importante: buscar por nombre exacto Y marca para evitar duplicados
+                # Validar datos mínimos
                 product_name = data.get('name', '').strip()
-                if not product_name:
-                    continue  # Saltar si no hay nombre
-                
-                product = self.db.query(Product).filter(
-                    Product.name == product_name,
-                    Product.brand_id == brand.id
-                ).first()
-                
-                # 4. CREAR PRODUCTO SI NO EXISTE
-                if not product:
-                    product = Product(
-                        name=product_name,
-                        brand_id=brand.id,
-                        category_id=category.id,
-                        image_url=data.get('image_url')
-                    )
-                    self.db.add(product)
-                    self.db.flush()
-                else:
-                    # Actualizar imagen si no tiene o si cambió
-                    if data.get('image_url') and not product.image_url:
-                        product.image_url = data.get('image_url')
-                
-                # 5. ACTUALIZAR O CREAR PRECIO EN ESTA TIENDA
-                # IMPORTANTE: Un producto puede tener UN SOLO precio por tienda
                 price_value = data.get('price', 0.0)
-                if price_value <= 0:
-                    continue  # Saltar precios inválidos
                 
-                # Buscar precio existente para este producto en esta tienda
+                if not product_name:
+                    continue
+                
+                if price_value <= 0:
+                    continue
+                
+                # 1. Obtener o crear MARCA
+                brand = self._get_or_create_brand(data.get('brand', 'Genérico'))
+                
+                # 2. Obtener o crear CATEGORÍA
+                category = self._get_or_create_category(data.get('category', 'General'))
+                
+                # 3. Obtener o crear PRODUCTO
+                product = self._get_or_create_product(
+                    product_name=product_name,
+                    brand=brand,
+                    category=category,
+                    image_url=data.get('image_url')
+                )
+                
+                if not product:
+                    continue
+                
+                # 4. Actualizar o crear PRECIO en esta tienda
+                # IMPORTANTE: Un producto tiene UN SOLO precio por tienda
                 store_price = self.db.query(StorePrice).filter(
                     StorePrice.product_id == product.id,
                     StorePrice.store_id == store_id
@@ -148,28 +208,47 @@ class ScraperService:
                     )
                     self.db.add(store_price)
                 
-                saved_count += 1
+                # Commit individual para evitar problemas de batch
+                try:
+                    self.db.commit()
+                    saved_count += 1
+                except Exception as commit_error:
+                    # Si falla el commit (ej: duplicado), hacer rollback y continuar
+                    self.db.rollback()
+                    errors_count += 1
+                    print(f"⚠️  Error guardando producto: {product_name}")
+                    print(f"   Error: {commit_error}")
+                    continue
                 
             except Exception as e:
+                errors_count += 1
                 print(f"⚠️  Error procesando producto: {data.get('name', 'Unknown')}")
                 print(f"   Error: {e}")
+                # Hacer rollback en caso de error
+                self.db.rollback()
                 continue
         
-        # Commit al final de todo el lote
-        try:
-            self.db.commit()
-        except Exception as e:
-            print(f"❌ Error al hacer commit: {e}")
-            self.db.rollback()
-            raise
+        if errors_count > 0:
+            print(f"   ⚠️  {errors_count} productos con errores (omitidos)")
         
         return saved_count
     
-    def mark_unavailable_products(self, store_id: int):
+    def mark_unavailable_products(self, store_id: int, available_product_ids: List[int]):
         """
-        Marcar como no disponibles los productos que no se encontraron
-        en el último scraping
+        Marcar como no disponibles los productos que no están en la lista
+        Útil después de un scraping completo
         """
-        # Esta función se puede ejecutar después del scraping
-        # para marcar productos que ya no están disponibles
-        pass
+        try:
+            # Marcar como no disponibles todos los productos que NO están en la lista
+            self.db.query(StorePrice).filter(
+                StorePrice.store_id == store_id,
+                ~StorePrice.product_id.in_(available_product_ids)
+            ).update({
+                'is_available': False
+            }, synchronize_session=False)
+            
+            self.db.commit()
+            print(f"✓ Productos no encontrados marcados como no disponibles")
+        except Exception as e:
+            print(f"⚠️  Error marcando productos no disponibles: {e}")
+            self.db.rollback()

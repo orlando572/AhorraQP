@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, DECIMAL, Boolean
+from sqlalchemy import Column, Integer, Text, ForeignKey, DECIMAL, Boolean, Index
 from sqlalchemy.orm import relationship
 from app.database.session import Base
 
@@ -12,6 +12,12 @@ class StorePrice(Base):
     url = Column(Text)
     is_available = Column(Boolean, default=True)
     
-    # Referencias como string para evitar ciclos
+    # Referencias
     product = relationship("Product", back_populates="prices")
     store = relationship("Store")
+    
+    # Índice compuesto para asegurar UN precio por producto por tienda
+    # y acelerar búsquedas
+    __table_args__ = (
+        Index('idx_product_store', 'product_id', 'store_id', unique=True),
+    )
