@@ -81,12 +81,10 @@ class PlazaVeaScraper(BaseScraper):
                         raw_category = item.get_attribute("data-ga-category") 
 
                         if raw_category:
-                            parts = raw_category.split('/') # Cortamos por cada '/'
+                            parts = raw_category.split('/')
                             if len(parts) > 1:
-                                # Tomamos el segundo elemento (índice 1), que sería "Arroz"
                                 category = parts[1].strip() 
                             else:
-                                # Si no hay '/', tomamos todo el texto (ej. "Arroz")
                                 category = parts[0].strip() 
                         else:
                             category = "Sin categoría"
