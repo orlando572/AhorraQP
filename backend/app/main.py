@@ -8,7 +8,7 @@ app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 # CORS para Vue frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especifica tu dominio
+    allow_origins=["*"],  # En producción
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -53,17 +53,12 @@ class AnalyticsService:
         Obtener las búsquedas más populares
         (Requiere procesar el JSONB - implementación básica)
         """
-        # Esta es una implementación simple
-        # Para producción, considera agregar índices GIN en query_data
         searches = self.db.query(SearchQuery).limit(100).all()
         
-        # Procesar y contar
         query_counts = {}
         for search in searches:
             if 'query' in search.query_data:
                 q = search.query_data['query']
                 query_counts[q] = query_counts.get(q, 0) + 1
-        
-        # Ordenar por popularidad
         popular = sorted(query_counts.items(), key=lambda x: x[1], reverse=True)
         return popular[:limit]

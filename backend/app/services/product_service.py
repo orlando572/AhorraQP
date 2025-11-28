@@ -15,8 +15,7 @@ class ProductService:
     def search_products(self, query: str, category_id: int = None) -> List[ProductResponse]:
         """Buscar productos por nombre"""
         q = self.db.query(Product).join(Brand).join(Category)
-        
-        # Filtro por nombre o marca
+
         q = q.filter(
             or_(
                 Product.name.ilike(f"%{query}%"),
@@ -24,7 +23,6 @@ class ProductService:
             )
         )
         
-        # Filtro por categoría si se especifica
         if category_id:
             q = q.filter(Product.category_id == category_id)
         
@@ -73,7 +71,6 @@ class ProductService:
                 items_unavailable=unavailable
             ))
         
-        # Ordenar por precio total (más barato primero)
         totals.sort(key=lambda x: x.total)
         return CartTotalsResponse(totals=totals)
     
