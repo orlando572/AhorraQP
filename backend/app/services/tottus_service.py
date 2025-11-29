@@ -76,11 +76,9 @@ class TottusDataService:
                 best_match = existing_cat
         
         if best_match:
-            print(f"      Categoría '{category_name}' → '{best_match.name}' (similitud: {best_ratio:.2f})")
             return best_match
         
         # Si no hay match, usar categoría por defecto
-        print(f"      Categoría '{category_name}' → 'Packs Abarrotes' (sin match)")
         return self.db.query(Category).filter(Category.name == 'Packs Abarrotes').first()
     
     def find_matching_brand(self, brand_name: str) -> Brand:
@@ -108,11 +106,9 @@ class TottusDataService:
                 best_match = existing_brand
         
         if best_match:
-            print(f"      Marca '{brand_name}' → '{best_match.name}' (similitud: {best_ratio:.2f})")
             return best_match
         
         # Crear nueva marca si no hay match
-        print(f"      Marca nueva: '{brand_name}'")
         brand = Brand(name=brand_name)
         self.db.add(brand)
         self.db.flush()
@@ -138,14 +134,14 @@ class TottusDataService:
         if exact_match:
             return exact_match
         
-        # 2. Búsqueda por nombre normalizado
+        # 2. Búsqueda por nombre normalizado y marca
         all_products = self.db.query(Product).filter(
             Product.brand_id == brand.id
         ).all()
         
         best_match = None
         best_ratio = 0.0
-        threshold = 0.85  # 85% de similitud mínima
+        threshold = 0.80  # 80% de similitud mínima
         
         for existing_product in all_products:
             ratio = self.similarity_ratio(product_name, existing_product.name)
@@ -154,11 +150,10 @@ class TottusDataService:
                 best_match = existing_product
         
         if best_match:
-            print(f"      Producto '{product_name}' → '{best_match.name}' (similitud: {best_ratio:.2f})")
+            print(f"      ✓ Match: '{product_name[:40]}...' → '{best_match.name[:40]}...' ({best_ratio:.2%})")
             return best_match
         
-        # 3. Búsqueda por palabras clave (para casos como "Arroz Extra" vs "Arroz Extra Faraon")
-        # Tokenizar y buscar coincidencias
+        # 3. Búsqueda por palabras clave (tokens)
         product_tokens = set(product_norm.split())
         
         for existing_product in all_products:
@@ -166,10 +161,10 @@ class TottusDataService:
             
             # Calcular intersección de tokens
             common_tokens = product_tokens.intersection(existing_tokens)
-            if len(common_tokens) >= 2:  # Al menos 2 palabras en común
-                token_ratio = len(common_tokens) / max(len(product_tokens), len(existing_tokens))
-                if token_ratio >= 0.6:  # 60% de tokens en común
-                    print(f"      Producto '{product_name}' → '{existing_product.name}' (tokens: {token_ratio:.2f})")
+            if len(common_tokens) >= 3:  # Al menos 3 palabras en común
+                token_ratio = len(common_tokens) / min(len(product_tokens), len(existing_tokens))
+                if token_ratio >= 0.7:  # 70% de tokens en común
+                    print(f"      ✓ Match tokens: '{product_name[:40]}...' → '{existing_product.name[:40]}...' ({token_ratio:.2%})")
                     return existing_product
         
         return None
@@ -187,20 +182,41 @@ class TottusDataService:
         for i, data in enumerate(products_data, 1):
             try:
                 # Validar datos mínimos
-                product_name = data.get('name', '').strip()
+                full_name = data.get('name', '').strip()
                 price_value = data.get('price', 0.0)
                 
-                if not product_name or price_value <= 0:
+                if not full_name or price_value <= 0:
                     continue
                 
                 if i % 10 == 0:
                     print(f"   Procesando producto {i}/{len(products_data)}...")
                 
+                # ═══════════════════════════════════════════════════════════
+                # CORRECCIÓN CRÍTICA: Limpiar el nombre del producto
+                # ═══════════════════════════════════════════════════════════
+                # El scraper retorna: "FARAON Arroz Faraon Extra Bolsa 5 Kg"
+                # Necesitamos:       "Arroz Faraon Extra Bolsa 5 Kg"
+                # Para hacer match con Plaza Vea/Makro que usan ese formato
+                
+                brand_from_data = data.get('brand', '').strip()
+                
+                # Quitar la marca del inicio del nombre si está presente
+                product_name = full_name
+                if brand_from_data and full_name.upper().startswith(brand_from_data.upper()):
+                    # Remover marca + espacio del inicio
+                    product_name = full_name[len(brand_from_data):].strip()
+                    
+                # Si después de quitar la marca el nombre queda vacío, usar el original
+                if not product_name:
+                    product_name = full_name
+                
+                # ═══════════════════════════════════════════════════════════
+                
                 # 1. Encontrar o mapear CATEGORÍA
                 category = self.find_matching_category(data.get('category', ''))
                 
                 # 2. Encontrar o crear MARCA
-                brand = self.find_matching_brand(data.get('brand', 'Generico'))
+                brand = self.find_matching_brand(brand_from_data or 'Generico')
                 
                 # 3. Buscar PRODUCTO EXISTENTE o crear nuevo
                 product = self.find_matching_product(product_name, brand)
@@ -250,12 +266,12 @@ class TottusDataService:
                 except Exception as commit_error:
                     self.db.rollback()
                     errors_count += 1
-                    print(f"⚠️  Error guardando: {product_name} - {commit_error}")
+                    print(f"      ⚠️  Error guardando: {product_name[:40]}... - {commit_error}")
                     continue
             
             except Exception as e:
                 errors_count += 1
-                print(f"⚠️  Error procesando: {data.get('name', 'Unknown')} - {e}")
+                print(f"      ⚠️  Error procesando: {data.get('name', 'Unknown')[:40]}... - {e}")
                 self.db.rollback()
                 continue
         
