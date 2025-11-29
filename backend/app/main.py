@@ -5,10 +5,14 @@ from app.api import products, cart, stores
 
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
-# CORS para Vue frontend
+origins = [
+    "http://localhost:5173",    # Vite local
+    "http://127.0.0.1:5173",    # Vite local IP
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción configurar dominio específico
+    allow_origins=origins,      
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

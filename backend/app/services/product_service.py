@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from typing import List
+from typing import List, Optional
 from decimal import Decimal
 from app.models import Product, Brand, Category, StorePrice
 from app.models.store import Store
@@ -12,21 +12,32 @@ class ProductService:
     def __init__(self, db: Session):
         self.db = db
     
-    def search_products(self, query: str, category_id: int = None) -> List[ProductResponse]:
-        """Buscar productos por nombre"""
+    def search_products(self, query: str = None, category_id: int = None) -> List[ProductResponse]:
+        """
+        Buscar productos de forma flexible:
+        - Solo texto
+        - Solo categoría
+        - Texto + Categoría
+        """
+        # Iniciamos la consulta base uniendo tablas necesarias
         q = self.db.query(Product).join(Brand).join(Category)
 
-        q = q.filter(
-            or_(
-                Product.name.ilike(f"%{query}%"),
-                Brand.name.ilike(f"%{query}%")
+        # 1. Si el usuario escribió texto (ej: "Arroz"), filtramos por nombre o marca
+        if query and len(query.strip()) > 0:
+            q = q.filter(
+                or_(
+                    Product.name.ilike(f"%{query}%"),
+                    Brand.name.ilike(f"%{query}%")
+                )
             )
-        )
         
+        # 2. Si el usuario seleccionó categoría, agregamos ese filtro también
         if category_id:
             q = q.filter(Product.category_id == category_id)
         
+        # Ejecutamos la consulta limitando a 50 resultados para no saturar
         products = q.limit(50).all()
+        
         return [self._build_product_response(p) for p in products]
     
     def get_product_by_id(self, product_id: int) -> ProductResponse:
