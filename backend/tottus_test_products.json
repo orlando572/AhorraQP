@@ -1,0 +1,52 @@
+[
+  {
+    "url": "https://www.tottus.com.pe/tottus-pe/articulo/113707060/arroz-extra-faraon-5-kg/113707061",
+    "brand": "FARAON",
+    "name": "Arroz Faraón Extra Bolsa 5 Kg",
+    "full_name": "FARAON Arroz Faraón Extra Bolsa 5 Kg",
+    "price": "24.50",
+    "image_url": "https://media.tottus.com.pe/tottusPE/41086701_1/width=240,height=240,quality=70,format=webp,fit=pad",
+    "data_key": "113707060",
+    "category_id": "J0101010203"
+  },
+  {
+    "url": "https://www.tottus.com.pe/tottus-pe/articulo/113707306/arroz-extra-costeno-5-kg/113707307",
+    "brand": "COSTENO",
+    "name": "Arroz Extra Costeño Bolsa 5 Kg",
+    "full_name": "COSTENO Arroz Extra Costeño Bolsa 5 Kg",
+    "price": "19.90",
+    "image_url": "https://media.tottus.com.pe/tottusPE/10472604_1/width=240,height=240,quality=70,format=webp,fit=pad",
+    "data_key": "113707306",
+    "category_id": "J0101010203"
+  },
+  {
+    "url": "https://www.tottus.com.pe/tottus-pe/articulo/113706045/arroz-extra-tottus-5-kg/113706046",
+    "brand": "TOTTUS",
+    "name": "Arroz Extra Tottus Bolsa 5 Kg",
+    "full_name": "TOTTUS Arroz Extra Tottus Bolsa 5 Kg",
+    "price": "19.90",
+    "image_url": "https://media.tottus.com.pe/tottusPE/40275956_1/width=240,height=240,quality=70,format=webp,fit=pad",
+    "data_key": "113706045",
+    "category_id": "J0101010203"
+  },
+  {
+    "url": "https://www.tottus.com.pe/tottus-pe/articulo/113715173/arroz-extra-faraon-750-g/113715174",
+    "brand": "FARAON",
+    "name": "Arroz Extra Faraón Bolsa 750 g",
+    "full_name": "FARAON Arroz Extra Faraón Bolsa 750 g",
+    "price": "4.49",
+    "image_url": "https://media.tottus.com.pe/tottusPE/41158775_1/width=240,height=240,quality=70,format=webp,fit=pad",
+    "data_key": "113715173",
+    "category_id": "J0101010203"
+  },
+  {
+    "url": "https://www.tottus.com.pe/tottus-pe/articulo/113706498/arroz-extra-integraltottus-750-g/113706499",
+    "brand": "TOTTUS",
+    "name": "Arroz Extra Integral Tottus Bolsa 750 g",
+    "full_name": "TOTTUS Arroz Extra Integral Tottus Bolsa 750 g",
+    "price": "3.75",
+    "image_url": "https://media.tottus.com.pe/tottusPE/40737788_1/width=240,height=240,quality=70,format=webp,fit=pad",
+    "data_key": "113706498",
+    "category_id": "J0101010202"
+  }
+]
