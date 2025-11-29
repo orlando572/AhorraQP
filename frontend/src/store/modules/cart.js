@@ -14,46 +14,48 @@ export const useCartStore = defineStore('cart', {
     
     totalItems: (state) => state.items.reduce((sum, item) => sum + item.quantity, 0),
     
-    // Obtener total por tienda específica
-    getTotalByStore: (state) => (storeId) => {
-      return state.items
-        .filter(item => item.selected_store_id === storeId)
-        .reduce((sum, item) => sum + (parseFloat(item.selected_price) * item.quantity), 0)
+    // Total a pagar (suma de los precios seleccionados)
+    cartTotal: (state) => {
+      return state.items.reduce((sum, item) => {
+        return sum + (parseFloat(item.selected_price) * item.quantity)
+      }, 0)
     },
-    
-    // Agrupar items por tienda
-    itemsByStore: (state) => {
-      const grouped = {}
-      state.items.forEach(item => {
-        const storeId = item.selected_store_id
-        if (!grouped[storeId]) {
-          grouped[storeId] = {
-            store_id: storeId,
-            store_name: item.selected_store_name,
-            items: [],
-            total: 0
-          }
+
+    // Cálculo del Ahorro: Compara el precio seleccionado con el precio MÁS ALTO disponible
+    totalSavings: (state) => {
+      return state.items.reduce((savings, item) => {
+        // 1. Obtener todos los precios disponibles de este producto
+        const prices = item.product.prices || []
+        
+        // 2. Si no hay precios o solo hay 1, no hay comparación
+        if (prices.length <= 1) return savings
+
+        // 3. Encontrar el precio más alto disponible
+        const availablePrices = prices
+          .filter(p => p.is_available)
+          .map(p => parseFloat(p.price))
+        
+        if (availablePrices.length === 0) return savings
+
+        const maxPrice = Math.max(...availablePrices)
+        const currentPrice = parseFloat(item.selected_price)
+
+        // 4. Calcular diferencia por unidad
+        const diffPerUnit = maxPrice - currentPrice
+
+        // 5. Si la diferencia es positiva, sumar al ahorro
+        if (diffPerUnit > 0) {
+          return savings + (diffPerUnit * item.quantity)
         }
-        grouped[storeId].items.push(item)
-        grouped[storeId].total += parseFloat(item.selected_price) * item.quantity
-      })
-      return Object.values(grouped)
-    },
-    
-    // Obtener la tienda con mejor precio
-    bestStore: (state) => {
-      const stores = Object.values(state.itemsByStore)
-      if (stores.length === 0) return null
-      return stores.reduce((best, current) => 
-        current.total < best.total ? current : best
-      )
+        
+        return savings
+      }, 0)
     }
   },
 
   actions: {
-    // Agregar item con tienda seleccionada
+    // Modificamos addItem para guardar el URL y los precios para comparar
     addItem(product) {
-      // Buscar si ya existe este producto de esta tienda
       const existing = this.items.find(item => 
         item.product_id === product.id && 
         item.selected_store_id === product.selected_store_id
@@ -69,19 +71,20 @@ export const useCartStore = defineStore('cart', {
             name: product.name,
             brand_name: product.brand_name,
             category_name: product.category_name,
-            image_url: product.image_url
+            image_url: product.image_url,
+            prices: product.prices 
           },
           quantity: 1,
           selected_store_id: product.selected_store_id,
           selected_store_name: product.selected_store_name,
-          selected_price: product.selected_price
+          selected_price: product.selected_price,
+          selected_url: product.selected_url 
         })
       }
       
       this.calculateTotals()
     },
 
-    // Remover item
     removeItem(productId, storeId) {
       this.items = this.items.filter(item => 
         !(item.product_id === productId && item.selected_store_id === storeId)
@@ -89,7 +92,6 @@ export const useCartStore = defineStore('cart', {
       this.calculateTotals()
     },
 
-    // Actualizar cantidad
     updateQuantity(productId, storeId, quantity) {
       const item = this.items.find(item => 
         item.product_id === productId && item.selected_store_id === storeId
@@ -105,90 +107,22 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    // Calcular totales
     async calculateTotals() {
+      // Mantenemos esta lógica solo para compatibilidad
       if (this.items.length === 0) {
         this.totals = []
         return
       }
-
-      this.loading = true
-      try {
-        // Preparar items agrupados por tienda
-        const itemsByStore = {}
-        this.items.forEach(item => {
-          const storeId = item.selected_store_id
-          if (!itemsByStore[storeId]) {
-            itemsByStore[storeId] = {
-              store_id: storeId,
-              store_name: item.selected_store_name,
-              total: 0,
-              items_count: 0
-            }
-          }
-          itemsByStore[storeId].total += parseFloat(item.selected_price) * item.quantity
-          itemsByStore[storeId].items_count += item.quantity
-        })
-        
-        // Convertir a array y ordenar por total
-        this.totals = Object.values(itemsByStore).sort((a, b) => a.total - b.total)
-        
-      } catch (error) {
-        console.error('Error calculando totales:', error)
-      } finally {
-        this.loading = false
-      }
     },
 
-    // Guardar carrito en el backend
-    async saveCart() {
-      if (this.items.length === 0) {
-        return { success: false, message: 'El carrito está vacío' }
-      }
-
-      try {
-        const cartData = {
-          items: this.items.map(item => ({
-            product_id: item.product_id,
-            product_name: item.product.name,
-            brand: item.product.brand_name,
-            quantity: item.quantity,
-            store_id: item.selected_store_id,
-            store_name: item.selected_store_name,
-            price: item.selected_price,
-            subtotal: parseFloat(item.selected_price) * item.quantity
-          })),
-          totals: this.totals
-        }
-        
-        const response = await cartService.saveCart(cartData)
-        this.lastSavedId = response.data.id
-        
-        return { 
-          success: true, 
-          message: 'Carrito guardado exitosamente',
-          id: response.data.id
-        }
-      } catch (error) {
-        console.error('Error guardando carrito:', error)
-        return { 
-          success: false, 
-          message: 'Error al guardar el carrito' 
-        }
-      }
-    },
-
-    // Limpiar carrito
     clearCart() {
       this.items = []
       this.totals = []
       this.lastSavedId = null
     }
   },
-
 },
 {
-  // Persistir en localStorage con pinia-plugin-persistedstate v3
   persist: {
     key: 'ahorraQP-cart',
     storage: localStorage,
