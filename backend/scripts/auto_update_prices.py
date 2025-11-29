@@ -25,7 +25,11 @@ CATEGORIAS = [
     'quesos-y-fiambres',
     'bebidas',
     'frutas-y-verduras',
+    'abarrotes/salsas-cremas-y-condimentos',
+    'abarrotes/fideos-pastas-y-salsas',
+    'abarrotes/conservas',
 ]
+
 
 # URLs BASE
 BASE_URLS = {
