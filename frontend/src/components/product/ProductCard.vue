@@ -116,7 +116,8 @@ const addToCart = (price) => {
     ...props.product,
     selected_store_id: price.store_id,
     selected_store_name: price.store_name,
-    selected_price: price.price
+    selected_price: price.price,
+    selected_url: price.url
   })
 }
 </script>
