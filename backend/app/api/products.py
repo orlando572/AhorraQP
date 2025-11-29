@@ -1,20 +1,28 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.database.session import get_db
-from app.schemas.product import ProductResponse, ProductSearch
+from app.schemas.product import ProductResponse
 from app.services.product_service import ProductService
 
 router = APIRouter()
 
 @router.get("/search", response_model=List[ProductResponse])
 def search_products(
-    q: str = Query(..., min_length=2, description="Término de búsqueda"),
-    category_id: int = Query(None, description="Filtrar por categoría"),
+    q: Optional[str] = Query(None, description="Término de búsqueda"),
+    category_id: Optional[int] = Query(None, description="Filtrar por categoría"),
     db: Session = Depends(get_db)
 ):
-    """Buscar productos por nombre"""
+    """
+    Buscar productos por nombre Y/O categoría.
+    Permite buscar solo por texto, solo por categoría o ambos.
+    """
     service = ProductService(db)
+    
+    # Validación: Si no envía NADA, retornamos lista vacía para no traer toda la base de datos
+    if not q and not category_id:
+        return []
+        
     return service.search_products(q, category_id)
 
 @router.get("/{product_id}", response_model=ProductResponse)
