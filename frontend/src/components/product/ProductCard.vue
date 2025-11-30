@@ -3,7 +3,10 @@
     <!-- Notificación de producto agregado -->
     <transition name="notification">
       <div v-if="showNotification" class="notification">
-        ✓ Producto agregado al carrito
+        <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M20 6L9 17l-5-5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Producto agregado al carrito
       </div>
     </transition>
 
@@ -35,7 +38,12 @@
         >
           <div class="store-info">
             <span class="store-name">{{ price.store_name }}</span>
-            <span v-if="isBestPrice(price)" class="best-badge">★ Mejor</span>
+            <span v-if="isBestPrice(price)" class="best-badge">
+              <svg class="star-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              Mejor
+            </span>
           </div>
           
           <div class="price-actions">
@@ -52,7 +60,9 @@
               class="btn-add-small"
               :title="`Agregar de ${price.store_name}`"
             >
-              +
+              <svg class="plus-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -70,7 +80,6 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/store/modules/cart'
-
 
 const props = defineProps({
   product: {
@@ -173,7 +182,12 @@ const addToCart = (price) => {
   box-shadow: 0 4px 12px rgba(44, 151, 75, 0.3);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.check-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* Animación de la notificación */
@@ -296,6 +310,14 @@ const addToCart = (price) => {
   font-size: 10px;
   color: #2c974b;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.star-icon {
+  width: 12px;
+  height: 12px;
 }
 
 .price-actions {
@@ -316,18 +338,24 @@ const addToCart = (price) => {
 }
 
 .btn-add-small {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: #2c974b;
   color: white;
-  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  padding: 0;
+}
+
+.plus-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.5;
 }
 
 .btn-add-small:hover {
@@ -356,4 +384,4 @@ const addToCart = (price) => {
 .btn-details:hover {
   background: #e0e0e0;
 }
-</style>
+</style>  

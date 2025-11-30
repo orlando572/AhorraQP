@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict, Any
 from decimal import Decimal
 
 class CartItem(BaseModel):
@@ -22,4 +22,4 @@ class CartTotalsResponse(BaseModel):
 
 class SaveCartRequest(BaseModel):
     items: List[dict]  # Lista completa de items con detalles
-    totals: List[dict]  # Totales calculados por tienda
+    totals: dict  # Totales calculados por tienda
