@@ -71,6 +71,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/store/modules/cart'
 
+
 const props = defineProps({
   product: {
     type: Object,
