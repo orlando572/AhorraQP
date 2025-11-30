@@ -127,6 +127,7 @@
 <script setup>
 import { useCartStore } from '@/store/modules/cart'
 
+
 const cartStore = useCartStore()
 
 const formatPrice = (price) => {

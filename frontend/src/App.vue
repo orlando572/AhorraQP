@@ -4,13 +4,11 @@
     <main class="main-content">
       <router-view />
     </main>
-    <Footer />
   </div>
 </template>
 
 <script setup>
 import Navbar from '@/components/common/Navbar.vue'
-import Footer from '@/components/common/Footer.vue'
 </script>
 
 <style scoped>
@@ -23,5 +21,6 @@ import Footer from '@/components/common/Footer.vue'
 .main-content {
   flex: 1;
   background: #ffffff;
+  padding-bottom: 40px;
 }
 </style>

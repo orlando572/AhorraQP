@@ -1,5 +1,12 @@
 <template>
   <div class="product-card">
+    <!-- Notificación de producto agregado -->
+    <transition name="notification">
+      <div v-if="showNotification" class="notification">
+        ✓ Producto agregado al carrito
+      </div>
+    </transition>
+
     <!-- Imagen del producto -->
     <div class="product-image">
       <img 
@@ -60,9 +67,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/store/modules/cart'
+
 
 const props = defineProps({
   product: {
@@ -73,6 +81,7 @@ const props = defineProps({
 
 const router = useRouter()
 const cartStore = useCartStore()
+const showNotification = ref(false)
 
 // Ordenar precios de menor a mayor (solo disponibles primero)
 const sortedPrices = computed(() => {
@@ -119,6 +128,14 @@ const addToCart = (price) => {
     selected_price: price.price,
     selected_url: price.url
   })
+  
+  // Mostrar notificación
+  showNotification.value = true
+  
+  // Ocultar después de 2 segundos
+  setTimeout(() => {
+    showNotification.value = false
+  }, 2000)
 }
 </script>
 
@@ -132,11 +149,62 @@ const addToCart = (price) => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
 }
 
 .product-card:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   transform: translateY(-2px);
+}
+
+/* Notificación */
+.notification {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c974b;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(44, 151, 75, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Animación de la notificación */
+.notification-enter-active {
+  animation: slideDown 0.3s ease-out;
+}
+
+.notification-leave-active {
+  animation: slideUp 0.3s ease-in;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
 }
 
 .product-image {
@@ -265,6 +333,10 @@ const addToCart = (price) => {
 .btn-add-small:hover {
   background: #247a3d;
   transform: scale(1.1);
+}
+
+.btn-add-small:active {
+  transform: scale(0.95);
 }
 
 .btn-details {
