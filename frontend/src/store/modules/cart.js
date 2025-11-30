@@ -18,18 +18,25 @@ export const useCartStore = defineStore('cart', {
     itemCount: (state) => state.items.length,
     totalItems: (state) => state.items.reduce((s, i) => s + i.quantity, 0),
     cartTotal: (state) => state.items.reduce((s, i) => s + (parseFloat(i.selected_price) * i.quantity), 0),
-
     totalSavings: (state) => {
-      return state.items.reduce((saving, item) => {
-        const prices = item.product?.prices ?? []
-        if (prices.length <= 1) return saving
+      return state.items.reduce((total, item) => {
 
-        const maxPrice = Math.max(
-          ...prices.filter(p => p.is_available).map(p => parseFloat(p.price))
-        )
+        if (!item.product || !item.product.prices) return total
 
-        const diff = maxPrice - parseFloat(item.selected_price)
-        return diff > 0 ? saving + diff * item.quantity : saving
+        const pricesValues = item.product.prices.map(p => parseFloat(p.price))
+
+        if (pricesValues.length <= 1) return total
+
+        const maxPrice = Math.max(...pricesValues)
+        const selectedPrice = parseFloat(item.selected_price)
+
+        const savingsPerUnit = maxPrice - selectedPrice
+
+        if (savingsPerUnit > 0) {
+          return total + (savingsPerUnit * item.quantity)
+        }
+
+        return total
       }, 0)
     }
   },
@@ -61,12 +68,15 @@ export const useCartStore = defineStore('cart', {
           selected_url: product.selected_url
         })
       }
+
+      this._autoSaveCart()
     },
 
     removeItem(productId, storeId) {
       this.items = this.items.filter(
         item => !(item.product_id === productId && item.selected_store_id === storeId)
       )
+      this._autoSaveCart()
     },
 
     updateQuantity(productId, storeId, quantity) {
@@ -78,12 +88,46 @@ export const useCartStore = defineStore('cart', {
       if (quantity <= 0) return this.removeItem(productId, storeId)
 
       item.quantity = quantity
+      this._autoSaveCart()
     },
 
     clearCart() {
       this.items = []
       this.totals = []
       this.lastSavedId = null
+    },
+
+    _autoSaveCart() {
+      if (this._saveTimeout) clearTimeout(this._saveTimeout)
+      if (this.items.length === 0) return
+
+      this._saveTimeout = setTimeout(async () => {
+        try {
+          const cartData = {
+            items: this.items.map(item => ({
+              product_id: item.product_id,
+              product_name: item.product.name,
+              brand_name: item.product.brand_name,
+              quantity: item.quantity,
+              store_name: item.selected_store_name,
+              price: item.selected_price
+            })),
+            totals: {
+              total_items: this.totalItems,
+              cart_total: this.cartTotal,
+              total_savings: this.totalSavings
+            }
+          }
+
+          const response = await cartService.saveCart(cartData)
+          if (response.data && response.data.id) {
+            this.lastSavedId = response.data.id
+            console.log('Carrito guardado automáticamente en DB')
+          }
+        } catch (error) {
+          console.error('Error auto-guardando carrito:', error)
+        }
+      }, 2000)
     }
   }
 })

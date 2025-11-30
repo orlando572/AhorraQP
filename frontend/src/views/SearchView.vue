@@ -2,12 +2,22 @@
   <div class="search-view">
     <!-- Header de búsqueda -->
     <div class="search-header">
-      <h1>Buscar Productos</h1>
+      <h1>
+        <svg class="search-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="11" cy="11" r="8" stroke-width="2"/>
+          <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Buscar Productos
+      </h1>
       
       <!-- Filtros -->
       <div class="filters-section">
         <!-- Búsqueda por nombre -->
         <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="11" cy="11" r="8" stroke-width="2"/>
+            <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+          </svg>
           <input
             v-model="searchQuery"
             @input="onSearch"
@@ -16,13 +26,17 @@
             class="search-input"
           >
           <button v-if="searchQuery" @click="clearFilters" class="btn-clear">
-            ✕ Limpiar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
 
         <!-- Filtro por categoría -->
         <div class="category-filter">
-          <label>Categoría:</label>
+          <label>
+            Categoría:
+          </label>
           <select v-model="selectedCategory" @change="onCategoryChange" class="category-select">
             <option :value="null">Todas las categorías</option>
             <option v-for="category in categories" :key="category.id" :value="category.id">
@@ -61,16 +75,34 @@
 
     <!-- Sin resultados -->
     <div v-else-if="searchQuery || selectedCategory" class="no-results">
-      <div class="empty-icon">🔍</div>
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="11" cy="11" r="8" stroke-width="2"/>
+        <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+        <path d="M8 11h6M11 8v6" stroke-width="2" stroke-linecap="round"/>
+      </svg>
       <h3>No se encontraron productos</h3>
       <p v-if="searchQuery">Para la búsqueda: "{{ searchQuery }}"</p>
       <p v-if="selectedCategory">En la categoría: {{ getCategoryName(selectedCategory) }}</p>
-      <button @click="clearFilters" class="btn-try-again">Limpiar filtros</button>
+      <button @click="clearFilters" class="btn-try-again">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M1 4v6h6M23 20v-6h-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Limpiar filtros
+      </button>
     </div>
 
     <!-- Estado inicial -->
     <div v-else class="initial-state">
-      <div class="welcome-icon">🛒</div>
+      <svg class="welcome-icon" viewBox="0 0 200 200" fill="none">
+        <circle cx="100" cy="100" r="80" fill="#f0f0f0"/>
+        <circle cx="100" cy="80" r="30" fill="white" stroke="#2c974b" stroke-width="3"/>
+        <path d="M100 110 L100 150" stroke="#2c974b" stroke-width="3" stroke-linecap="round"/>
+        <path d="M70 130 L100 150 L130 130" stroke="#2c974b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="90" cy="75" r="5" fill="#2c974b"/>
+        <circle cx="110" cy="75" r="5" fill="#2c974b"/>
+        <path d="M85 90 Q100 100 115 90" stroke="#2c974b" stroke-width="3" stroke-linecap="round" fill="none"/>
+      </svg>
       <h3>Encuentra los mejores precios</h3>
       <p>Busca por nombre o selecciona una categoría</p>
       
@@ -106,7 +138,7 @@ const loading = ref(false)
 
 let searchTimeout = null
 
-// Categorías populares (IDs hardcodeados basados en tu DB)
+// Categorías populares
 const popularCategories = computed(() => {
   return categories.value.filter(cat => 
     ['Arroz', 'Aceite', 'Leche', 'Yogurt', 'Azúcar y Endulzantes'].includes(cat.name)
@@ -162,7 +194,6 @@ const clearFilters = () => {
   products.value = []
 }
 
-// Cargar categorías al montar
 onMounted(async () => {
   try {
     const response = await categoryService.getCategories()
@@ -187,6 +218,15 @@ onMounted(async () => {
 .search-header h1 {
   margin: 0 0 20px;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-title-icon {
+  width: 32px;
+  height: 32px;
+  stroke-width: 2;
 }
 
 .filters-section {
@@ -197,37 +237,54 @@ onMounted(async () => {
 
 .search-box {
   display: flex;
+  align-items: center;
   gap: 10px;
-}
-
-.search-input {
-  flex: 1;
-  padding: 14px 20px;
-  font-size: 16px;
+  background: white;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
+  padding: 4px 16px;
   transition: all 0.3s;
 }
 
-.search-input:focus {
-  outline: none;
+.search-box:focus-within {
   border-color: #2c974b;
   box-shadow: 0 0 0 3px rgba(44, 151, 75, 0.1);
 }
 
-.btn-clear {
-  padding: 0 20px;
-  background: #f0f0f0;
+.search-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  color: #999;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 16px;
   border: none;
-  border-radius: 8px;
+  outline: none;
+}
+
+.btn-clear {
+  background: none;
+  border: none;
+  padding: 8px;
   cursor: pointer;
-  font-size: 14px;
-  color: #666;
+  color: #999;
+  display: flex;
+  align-items: center;
   transition: all 0.2s;
 }
 
 .btn-clear:hover {
-  background: #e0e0e0;
+  color: #d32f2f;
+}
+
+.btn-clear svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
 }
 
 .category-filter {
@@ -239,6 +296,15 @@ onMounted(async () => {
 .category-filter label {
   font-weight: 500;
   color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .category-select {
@@ -304,14 +370,24 @@ onMounted(async () => {
   color: #666;
 }
 
-.empty-icon, .welcome-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  color: #ccc;
+  stroke-width: 1.5;
+}
+
+.welcome-icon {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 20px;
 }
 
 .no-results h3, .initial-state h3 {
   color: #333;
   margin: 0 0 10px;
+  font-size: 24px;
 }
 
 .btn-try-again {
@@ -323,6 +399,21 @@ onMounted(async () => {
   border-radius: 8px;
   cursor: pointer;
   font-size: 15px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-try-again:hover {
+  background: #247a3d;
+}
+
+.btn-try-again svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
 }
 
 .popular-categories {
@@ -370,10 +461,6 @@ onMounted(async () => {
   .category-select {
     min-width: auto;
     width: 100%;
-  }
-
-  .filters-section {
-    gap: 12px;
   }
 }
 </style>
